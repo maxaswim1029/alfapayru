@@ -1133,10 +1133,49 @@
   function handleOverlay(e) {
     if (e.target === document.getElementById('modal')) closeModal();
   }
-  function submitForm(e) {
+  const SUPABASE_URL = 'https://rnotzuhfdoopdawheztd.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJub3R6dWhmZG9vcGRhd2hlenRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0NzI5NTIsImV4cCI6MjA5NzA0ODk1Mn0.HNfUq4YOWBMPPWg9mWwaOL0xjv23X-8dQLPPVqpu0K8';
+
+  async function submitForm(e) {
     e.preventDefault();
-    document.getElementById('form-wrap').style.display = 'none';
-    document.getElementById('modal-success').classList.add('show');
+    const form = e.target;
+    const fd = new FormData(form);
+    const data = {
+      name: fd.get('name'),
+      phone: fd.get('phone'),
+      email: fd.get('email') || null,
+      tg_linked: form.elements['tg_linked'].checked,
+      client_type: fd.get('client_type'),
+      currency: fd.get('currency'),
+      destination: fd.get('destination'),
+      amount: fd.get('amount') || null,
+      comment: fd.get('comment') || null,
+      status: 'new'
+    };
+    const btn = form.querySelector('.btn-submit');
+    btn.disabled = true;
+    btn.textContent = '\u041e\u0442\u043f\u0440\u0430\u0432\u043b\u044f\u0435\u043c\u2026';
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/leads`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) throw new Error(await res.text());
+      document.getElementById('form-wrap').style.display = 'none';
+      document.getElementById('modal-success').classList.add('show');
+    } catch(err) {
+      alert('\u041e\u0448\u0438\u0431\u043a\u0430 \u043f\u0440\u0438 \u043e\u0442\u043f\u0440\u0430\u0432\u043a\u0435. \u041f\u043e\u0436\u0430\u043b\u0443\u0439\u0441\u0442\u0430, \u043f\u043e\u0437\u0432\u043e\u043d\u0438\u0442\u0435 \u043d\u0430\u043c \u0438\u043b\u0438 \u043d\u0430\u043f\u0438\u0448\u0438\u0442\u0435 \u0432 Telegram.');
+      console.error(err);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '\u041e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u044c \u0437\u0430\u044f\u0432\u043a\u0443';
+    }
   }
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeModal();

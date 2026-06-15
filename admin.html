@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Alfa Payments</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --gold: #B48A3A;
+  --dark: #1e1e1e;
+  --bg: #f4f5f7;
+  --white: #ffffff;
+  --border: #e0e4ea;
+  --text: #1a1a1a;
+  --text2: #555;
+  --text3: #888;
+  --radius: 8px;
+  --blue: #2563eb;
+  --green: #16a34a;
+  --red: #dc2626;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
+
+/* ── LOGIN ── */
+.login-overlay {
+  position: fixed; inset: 0; background: #1a1a1a;
+  display: flex; align-items: center; justify-content: center; z-index: 1000;
+}
+.login-box {
+  background: #fff; border-radius: 14px; padding: 44px 40px;
+  width: 360px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.4);
+}
+.login-logo { font-size: 13px; font-weight: 700; color: var(--gold); letter-spacing: .16em; text-transform: uppercase; margin-bottom: 6px; }
+.login-title { font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+.login-sub { font-size: 13px; color: var(--text3); margin-bottom: 28px; }
+.login-box input {
+  width: 100%; padding: 12px 14px; border: 1.5px solid var(--border);
+  border-radius: var(--radius); font-size: 15px; margin-bottom: 12px;
+  outline: none; transition: border-color .15s;
+}
+.login-box input:focus { border-color: var(--gold); }
+.login-btn {
+  width: 100%; padding: 13px; background: var(--dark); color: #fff;
+  border: none; border-radius: var(--radius); font-size: 15px; font-weight: 600;
+  cursor: pointer; transition: background .15s;
+}
+.login-btn:hover { background: #333; }
+.login-error { color: var(--red); font-size: 13px; margin-top: 12px; min-height: 18px; }
+
+/* ── PANEL ── */
+.panel { display: none; min-height: 100vh; }
+
+header {
+  background: var(--dark); padding: 0 24px; height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.hdr-left { display: flex; align-items: center; gap: 16px; }
+.hdr-logo { font-size: 13px; font-weight: 700; color: var(--gold); letter-spacing: .14em; text-transform: uppercase; }
+.hdr-divider { width: 1px; height: 20px; background: rgba(255,255,255,.12); }
+.hdr-title { font-size: 13px; color: rgba(255,255,255,.45); }
+.hdr-right { display: flex; align-items: center; gap: 14px; }
+.hdr-clock { font-size: 12px; color: rgba(255,255,255,.28); }
+.logout-btn {
+  font-size: 12px; color: rgba(255,255,255,.45); background: none;
+  border: 1px solid rgba(255,255,255,.14); border-radius: 6px;
+  padding: 5px 14px; cursor: pointer; transition: all .15s;
+}
+.logout-btn:hover { color: #fff; border-color: rgba(255,255,255,.35); }
+
+/* ── STATS ── */
+.stats-row { display: flex; gap: 14px; padding: 20px 24px 0; flex-wrap: wrap; }
+.stat-card {
+  background: var(--white); border-radius: 10px; padding: 16px 20px;
+  border: 1px solid var(--border); flex: 1; min-width: 130px;
+}
+.stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
+.stat-value { font-size: 28px; font-weight: 700; line-height: 1; }
+.stat-value.total { color: var(--text); }
+.stat-value.s-new { color: var(--blue); }
+.stat-value.s-qual { color: var(--green); }
+.stat-value.s-unqual { color: var(--red); }
+
+/* ── FILTER BAR ── */
+.filter-bar { display: flex; gap: 10px; padding: 16px 24px; align-items: center; flex-wrap: wrap; }
+.search-input {
+  flex: 1; min-width: 200px; max-width: 340px;
+  padding: 9px 14px; border: 1.5px solid var(--border);
+  border-radius: var(--radius); font-size: 13px; outline: none;
+  background: var(--white); transition: border-color .15s;
+}
+.search-input:focus { border-color: var(--gold); }
+.filter-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.ftab {
+  padding: 7px 14px; border-radius: 20px; font-size: 12px; font-weight: 500;
+  border: 1.5px solid var(--border); background: var(--white);
+  cursor: pointer; color: var(--text2); transition: all .15s; white-space: nowrap;
+}
+.ftab.active { background: var(--dark); color: #fff; border-color: var(--dark); }
+.ftab.active.s-new { background: var(--blue); border-color: var(--blue); }
+.ftab.active.s-qual { background: var(--green); border-color: var(--green); }
+.ftab.active.s-unqual { background: var(--red); border-color: var(--red); }
+.refresh-btn {
+  padding: 7px 14px; border-radius: var(--radius); font-size: 12px;
+  border: 1.5px solid var(--border); background: var(--white);
+  cursor: pointer; color: var(--text2); transition: background .15s;
+}
+.refresh-btn:hover { background: #eee; }
+
+/* ── TABLE ── */
+.table-wrap {
+  margin: 0 24px 28px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: auto;
+}
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th {
+  padding: 11px 14px; text-align: left;
+  font-size: 10px; font-weight: 600; color: var(--text3);
+  text-transform: uppercase; letter-spacing: .07em;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap; background: #fafafa;
+  position: sticky; top: 0; z-index: 1;
+}
+td { padding: 12px 14px; border-bottom: 1px solid #f0f2f5; vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #f8f9ff; }
+
+.cell-id { color: var(--text3); font-size: 11px; }
+.cell-date { font-size: 11px; color: var(--text3); white-space: nowrap; }
+.cell-name { font-weight: 600; font-size: 13px; }
+.cell-phone { color: var(--gold); font-weight: 500; font-size: 12px; margin-top: 2px; }
+.tg-badge {
+  display: inline-block; font-size: 10px; font-weight: 600;
+  background: #e8f4fd; color: #0088cc; padding: 1px 6px;
+  border-radius: 4px; margin-top: 4px; letter-spacing: .02em;
+}
+.cell-type { font-size: 11px; color: var(--text2); white-space: nowrap; }
+.cell-currency { font-size: 12px; white-space: nowrap; }
+.cell-dest { max-width: 150px; word-break: break-word; font-size: 12px; }
+.cell-amount { white-space: nowrap; font-size: 12px; }
+.cell-comment { max-width: 130px; color: var(--text2); font-size: 12px; word-break: break-word; }
+
+/* ── STATUS CELL ── */
+.status-cell { min-width: 210px; }
+.status-select {
+  width: 100%; padding: 7px 10px; border-radius: 6px;
+  border: 1.5px solid var(--border); font-size: 12px; font-weight: 600;
+  background: #fff; cursor: pointer; outline: none; transition: border-color .15s, background .15s;
+}
+.status-select.new { color: var(--blue); border-color: #93c5fd; background: #eff6ff; }
+.status-select.qualified { color: var(--green); border-color: #86efac; background: #f0fdf4; }
+.status-select.unqualified { color: var(--red); border-color: #fca5a5; background: #fef2f2; }
+
+.substatus-select {
+  width: 100%; margin-top: 6px; padding: 6px 10px; border-radius: 6px;
+  border: 1.5px solid #86efac; font-size: 12px; background: #f0fdf4;
+  color: var(--green); cursor: pointer; outline: none;
+}
+.reason-textarea {
+  width: 100%; margin-top: 6px; padding: 6px 10px; border-radius: 6px;
+  border: 1.5px solid #fca5a5; font-size: 12px; color: var(--red);
+  outline: none; resize: vertical; min-height: 54px; font-family: inherit;
+  background: #fef2f2;
+}
+.reason-textarea:focus, .substatus-select:focus { border-color: var(--gold); }
+.save-ind { font-size: 11px; margin-top: 4px; min-height: 16px; }
+.save-ind.saving { color: var(--text3); }
+.save-ind.saved { color: var(--green); }
+.save-ind.err { color: var(--red); }
+
+.empty-row td { text-align: center; padding: 60px; color: var(--text3); font-size: 14px; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">Alfa Payments</div>
+    <div class="login-title">Панель управления</div>
+    <div class="login-sub">Введите пароль для входа</div>
+    <input type="password" id="pwd-input" placeholder="Пароль"
+      onkeydown="if(event.key==='Enter') doLogin()">
+    <button class="login-btn" onclick="doLogin()">Войти</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- PANEL -->
+<div class="panel" id="panel">
+  <header>
+    <div class="hdr-left">
+      <div class="hdr-logo">Alfa Payments</div>
+      <div class="hdr-divider"></div>
+      <div class="hdr-title">Панель управления заявками</div>
+    </div>
+    <div class="hdr-right">
+      <span class="hdr-clock" id="hdr-clock"></span>
+      <button class="logout-btn" onclick="doLogout()">Выйти</button>
+    </div>
+  </header>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Всего заявок</div>
+      <div class="stat-value total" id="st-total">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Новые</div>
+      <div class="stat-value s-new" id="st-new">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Квалифицированные</div>
+      <div class="stat-value s-qual" id="st-qual">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Неквалифицированные</div>
+      <div class="stat-value s-unqual" id="st-unqual">—</div>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <input class="search-input" id="search-input" placeholder="Поиск по имени, телефону, email…"
+      oninput="renderTable()">
+    <div class="filter-tabs">
+      <button class="ftab active" onclick="setFilter('all',this)">Все</button>
+      <button class="ftab s-new" onclick="setFilter('new',this)">Новые</button>
+      <button class="ftab s-qual" onclick="setFilter('qualified',this)">Квалифицированные</button>
+      <button class="ftab s-unqual" onclick="setFilter('unqualified',this)">Неквалифицированные</button>
+    </div>
+    <button class="refresh-btn" onclick="loadAndRender()">↻ Обновить</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Дата</th>
+          <th>Клиент</th>
+          <th>Email</th>
+          <th>Тип</th>
+          <th>Валюта</th>
+          <th>Получатель</th>
+          <th>Сумма</th>
+          <th>Комментарий</th>
+          <th>Статус</th>
+        </tr>
+      </thead>
+      <tbody id="leads-tbody">
+        <tr class="empty-row"><td colspan="10">Загрузка…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://rnotzuhfdoopdawheztd.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJub3R6dWhmZG9vcGRhd2hlenRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0NzI5NTIsImV4cCI6MjA5NzA0ODk1Mn0.HNfUq4YOWBMPPWg9mWwaOL0xjv23X-8dQLPPVqpu0K8';
+const ADMIN_PASSWORD = 'Alfa2025!';
+
+let allLeads = [];
+let currentFilter = 'all';
+
+/* ── AUTH ── */
+function doLogin() {
+  const pwd = document.getElementById('pwd-input').value;
+  if (pwd === ADMIN_PASSWORD) {
+    sessionStorage.setItem('admin_ok', '1');
+    showPanel();
+  } else {
+    document.getElementById('login-error').textContent = 'Неверный пароль';
+    document.getElementById('pwd-input').value = '';
+    document.getElementById('pwd-input').focus();
+  }
+}
+function doLogout() {
+  sessionStorage.removeItem('admin_ok');
+  location.reload();
+}
+function showPanel() {
+  document.getElementById('login-overlay').style.display = 'none';
+  document.getElementById('panel').style.display = 'block';
+  loadAndRender();
+  startClock();
+}
+if (sessionStorage.getItem('admin_ok')) showPanel();
+
+function startClock() {
+  function tick() {
+    document.getElementById('hdr-clock').textContent =
+      new Date().toLocaleString('ru', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  }
+  tick(); setInterval(tick, 10000);
+}
+
+/* ── API ── */
+const hdrs = {
+  'apikey': SUPABASE_KEY,
+  'Authorization': 'Bearer ' + SUPABASE_KEY,
+  'Content-Type': 'application/json'
+};
+
+async function loadAndRender() {
+  const tbody = document.getElementById('leads-tbody');
+  tbody.innerHTML = '<tr class="empty-row"><td colspan="10">Загрузка…</td></tr>';
+  try {
+    const res = await fetch(SUPABASE_URL + '/rest/v1/leads?order=created_at.desc&select=*', { headers: hdrs });
+    if (!res.ok) throw new Error(await res.text());
+    allLeads = await res.json();
+    updateStats();
+    renderTable();
+  } catch(e) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="10" style="color:#dc2626">Ошибка загрузки: ' + e.message + '</td></tr>';
+  }
+}
+
+async function patchLead(id, data) {
+  const res = await fetch(SUPABASE_URL + '/rest/v1/leads?id=eq.' + id, {
+    method: 'PATCH',
+    headers: Object.assign({}, hdrs, { 'Prefer': 'return=minimal' }),
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error(await res.text());
+}
+
+/* ── STATS ── */
+function updateStats() {
+  document.getElementById('st-total').textContent = allLeads.length;
+  document.getElementById('st-new').textContent = allLeads.filter(l => l.status === 'new').length;
+  document.getElementById('st-qual').textContent = allLeads.filter(l => l.status === 'qualified').length;
+  document.getElementById('st-unqual').textContent = allLeads.filter(l => l.status === 'unqualified').length;
+}
+
+/* ── FILTER ── */
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTable();
+}
+
+/* ── RENDER ── */
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmtDate(iso) {
+  return new Date(iso).toLocaleString('ru', {
+    day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit'
+  });
+}
+
+function renderTable() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  let leads = allLeads;
+  if (currentFilter !== 'all') leads = leads.filter(l => l.status === currentFilter);
+  if (q) leads = leads.filter(l =>
+    (l.name||'').toLowerCase().includes(q) ||
+    (l.phone||'').toLowerCase().includes(q) ||
+    (l.email||'').toLowerCase().includes(q)
+  );
+  const tbody = document.getElementById('leads-tbody');
+  if (!leads.length) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="10">Заявок не найдено</td></tr>';
+    return;
+  }
+  tbody.innerHTML = leads.map(rowHtml).join('');
+}
+
+function rowHtml(l) {
+  const typeLabel = l.client_type === 'individual' ? 'Физлицо' :
+                    l.client_type === 'company'     ? 'Юрлицо / ИП' : (l.client_type || '');
+  const statusOpts = [
+    ['new',         'Новая'],
+    ['qualified',   'Квалифицированный лид'],
+    ['unqualified', 'Неквалифицированный лид']
+  ].map(([v,lbl]) =>
+    '<option value="' + v + '"' + (l.status === v ? ' selected' : '') + '>' + lbl + '</option>'
+  ).join('');
+
+  let secondary = '';
+  if (l.status === 'qualified') {
+    const subOpts = [
+      ['',             '— Выберите подстатус —'],
+      ['chat_created', 'Чат создан'],
+      ['ad_signed',    'АД подписан'],
+      ['first_payment','Первый платёж']
+    ].map(([v,lbl]) =>
+      '<option value="' + v + '"' + (l.substatus === v ? ' selected' : '') + '>' + lbl + '</option>'
+    ).join('');
+    secondary = '<select class="substatus-select" onchange="onSubstatus(' + l.id + ',this)">' + subOpts + '</select>';
+  } else if (l.status === 'unqualified') {
+    secondary = '<textarea class="reason-textarea" placeholder="Причина отказа…" onblur="onReason(' + l.id + ',this)">' + esc(l.status_reason) + '</textarea>';
+  }
+
+  return '<tr id="row-' + l.id + '">' +
+    '<td class="cell-id">' + l.id + '</td>' +
+    '<td class="cell-date">' + fmtDate(l.created_at) + '</td>' +
+    '<td><div class="cell-name">' + esc(l.name) + '</div>' +
+         '<div class="cell-phone">' + esc(l.phone) + '</div>' +
+         (l.tg_linked ? '<span class="tg-badge">TG</span>' : '') + '</td>' +
+    '<td style="font-size:12px;word-break:break-all">' + esc(l.email || '—') + '</td>' +
+    '<td class="cell-type">' + typeLabel + '</td>' +
+    '<td class="cell-currency">' + esc(l.currency || '') + '</td>' +
+    '<td class="cell-dest">' + esc(l.destination || '') + '</td>' +
+    '<td class="cell-amount">' + esc(l.amount || '—') + '</td>' +
+    '<td class="cell-comment">' + esc(l.comment || '') + '</td>' +
+    '<td class="status-cell">' +
+      '<select class="status-select ' + (l.status||'new') + '" onchange="onStatus(' + l.id + ',this)">' + statusOpts + '</select>' +
+      secondary +
+      '<div class="save-ind" id="ind-' + l.id + '"></div>' +
+    '</td>' +
+  '</tr>';
+}
+
+/* ── UPDATES ── */
+function setInd(id, cls, msg) {
+  const el = document.getElementById('ind-' + id);
+  if (el) { el.className = 'save-ind ' + cls; el.textContent = msg; }
+}
+
+async function onStatus(id, sel) {
+  const status = sel.value;
+  sel.className = 'status-select ' + status;
+  setInd(id, 'saving', 'Сохраняем…');
+  const patch = { status };
+  if (status !== 'qualified')   patch.substatus    = null;
+  if (status !== 'unqualified') patch.status_reason = null;
+  try {
+    await patchLead(id, patch);
+    const lead = allLeads.find(l => l.id === id);
+    if (lead) Object.assign(lead, patch);
+    // re-render this row
+    const row = document.getElementById('row-' + id);
+    if (row && lead) row.outerHTML = rowHtml(lead);
+    setInd(id, 'saved', '✓ Сохранено');
+    updateStats();
+    setTimeout(() => setInd(id, '', ''), 2000);
+  } catch(e) {
+    setInd(id, 'err', '✗ Ошибка');
+  }
+}
+
+async function onSubstatus(id, sel) {
+  const substatus = sel.value || null;
+  setInd(id, 'saving', 'Сохраняем…');
+  try {
+    await patchLead(id, { substatus });
+    const lead = allLeads.find(l => l.id === id);
+    if (lead) lead.substatus = substatus;
+    setInd(id, 'saved', '✓ Сохранено');
+    setTimeout(() => setInd(id, '', ''), 2000);
+  } catch(e) {
+    setInd(id, 'err', '✗ Ошибка');
+  }
+}
+
+async function onReason(id, ta) {
+  const status_reason = ta.value.trim() || null;
+  setInd(id, 'saving', 'Сохраняем…');
+  try {
+    await patchLead(id, { status_reason });
+    const lead = allLeads.find(l => l.id === id);
+    if (lead) lead.status_reason = status_reason;
+    setInd(id, 'saved', '✓ Сохранено');
+    setTimeout(() => setInd(id, '', ''), 2000);
+  } catch(e) {
+    setInd(id, 'err', '✗ Ошибка');
+  }
+}
+</script>
+</body>
+</html>
