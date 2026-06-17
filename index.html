@@ -1996,6 +1996,27 @@
   const SUPABASE_URL = 'https://rnotzuhfdoopdawheztd.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJub3R6dWhmZG9vcGRhd2hlenRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0NzI5NTIsImV4cCI6MjA5NzA0ODk1Mn0.HNfUq4YOWBMPPWg9mWwaOL0xjv23X-8dQLPPVqpu0K8';
 
+  function sendTelegramNotification(p) {
+    const TG_TOKEN = '8629414273:AAFJDNxn9UIAg9NsGwi3KW92NAvkZo3nIi4';
+    const TG_CHAT  = '8962527801';
+    const typeLabel = p.client_type === 'individual' ? 'Физическое лицо' :
+                      p.client_type === 'company'    ? 'Юридическое лицо / ИП' : p.client_type;
+    let text = '\uD83D\uDD14 <b>Новая заявка!</b>\n\n';
+    text += '\uD83D\uDC64 ' + p.name + '\n';
+    text += '\uD83D\uDCF1 ' + p.phone + (p.tg_linked ? ' (TG \u2713)' : '') + '\n';
+    if (p.email) text += '\uD83D\uDCE7 ' + p.email + '\n';
+    text += '\uD83C\uDFE2 ' + typeLabel + '\n';
+    text += '\uD83D\uDCB1 ' + p.currency + '\n';
+    text += '\uD83D\uDCCD ' + p.destination + '\n';
+    if (p.amount)  text += '\uD83D\uDCB0 ' + p.amount + '\n';
+    if (p.comment) text += '\uD83D\uDCAC ' + p.comment + '\n';
+    return fetch('https://api.telegram.org/bot' + TG_TOKEN + '/sendMessage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: TG_CHAT, text: text, parse_mode: 'HTML' })
+    });
+  }
+
   async function submitForm() {
     const name = document.getElementById('f-name').value.trim();
     const phone = document.getElementById('f-phone').value.trim();
@@ -2030,6 +2051,7 @@
         body: JSON.stringify(payload)
       });
       if (!res.ok) throw new Error(await res.text());
+      sendTelegramNotification(payload).catch(() => {});
     } catch(e) {
       console.error('Supabase error:', e);
     }
